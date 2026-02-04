@@ -1,0 +1,195 @@
+cat > index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>JARVIS Mobile Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="install-prompt">
+        <p>Install JARVIS Assistant for better experience</p>
+        <button id="installBtn">Install</button>
+        <button id="dismissBtn">Dismiss</button>
+    </div>
+
+    <!-- Main Interface -->
+    <div class="container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time" id="currentTime">00:00</div>
+            <div class="status-icons">
+                <i class="fas fa-microphone" id="micStatusIcon"></i>
+                <i class="fas fa-battery-three-quarters"></i>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-robot"></i> J.A.R.V.I.S.</h1>
+            <p class="subtitle">Just A Rather Very Intelligent System</p>
+        </header>
+
+        <!-- Main Display -->
+        <main class="main-content">
+            <!-- Visual Feedback -->
+            <div class="visual-feedback">
+                <div class="pulse-ring" id="pulseRing"></div>
+                <div class="assistant-face" id="assistantFace">
+                    <div class="eye left"></div>
+                    <div class="eye right"></div>
+                    <div class="mouth" id="mouth"></div>
+                </div>
+            </div>
+
+            <!-- Command Display -->
+            <div class="command-display">
+                <div class="listening-indicator" id="listeningIndicator">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    Listening...
+                </div>
+                <div class="transcript" id="transcript">
+                    <p id="userTranscript">Say "Hey Jarvis" to begin</p>
+                    <p id="assistantResponse" class="response">Ready to assist you</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn" id="voiceBtn">
+                    <i class="fas fa-microphone"></i>
+                    <span>Voice Command</span>
+                </button>
+                
+                <button class="control-btn" id="commandsBtn">
+                    <i class="fas fa-list"></i>
+                    <span>Commands</span>
+                </button>
+                
+                <button class="control-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="quick-btn" id="weatherBtn">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>Weather</span>
+                </button>
+                <button class="quick-btn" id="timeBtn">
+                    <i class="fas fa-clock"></i>
+                    <span>Time</span>
+                </button>
+                <button class="quick-btn" id="newsBtn">
+                    <i class="fas fa-newspaper"></i>
+                    <span>News</span>
+                </button>
+                <button class="quick-btn" id="reminderBtn">
+                    <i class="fas fa-bell"></i>
+                    <span>Reminder</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Wake Word Toggle -->
+        <div class="wake-word-section">
+            <label class="switch">
+                <input type="checkbox" id="wakeWordToggle" checked>
+                <span class="slider"></span>
+            </label>
+            <span class="wake-word-label">"Hey Jarvis" wake word</span>
+        </div>
+    </div>
+
+    <!-- Commands Modal -->
+    <div id="commandsModal" class="modal">
+        <div class="modal-content">
+            <h2>Available Commands</h2>
+            <div class="commands-list">
+                <div class="command-item">
+                    <strong>"What's the time?"</strong>
+                    <span>Get current time</span>
+                </div>
+                <div class="command-item">
+                    <strong>"What's the weather?"</strong>
+                    <span>Get weather information</span>
+                </div>
+                <div class="command-item">
+                    <strong>"Set a reminder"</strong>
+                    <span>Set a new reminder</span>
+                </div>
+                <div class="command-item">
+                    <strong>"Tell me a joke"</strong>
+                    <span>Hear a random joke</span>
+                </div>
+                <div class="command-item">
+                    <strong>"What can you do?"</strong>
+                    <span>List all commands</span>
+                </div>
+                <div class="command-item">
+                    <strong>"Goodbye"</strong>
+                    <span>Deactivate assistant</span>
+                </div>
+            </div>
+            <button class="close-btn" id="closeCommands">Close</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            <div class="settings-options">
+                <div class="setting-item">
+                    <label for="voiceSelect">Assistant Voice</label>
+                    <select id="voiceSelect">
+                        <option value="">Default</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="volumeControl">Volume</label>
+                    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="soundEffectsToggle" checked>
+                        Sound Effects
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="autoStartToggle">
+                        Auto-start on open
+                    </label>
+                </div>
+            </div>
+            <button class="close-btn" id="closeSettings">Close</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <p id="notificationText"></p>
+    </div>
+
+    <!-- Audio elements for sounds -->
+    <audio id="activationSound">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mpeg">
+    </audio>
+    <audio id="notificationSound">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
+EOF
