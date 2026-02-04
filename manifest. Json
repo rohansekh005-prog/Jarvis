@@ -1,0 +1,37 @@
+{
+    "name": "JARVIS Assistant",
+    "short_name": "JARVIS",
+    "description": "A voice-activated intelligent assistant for mobile",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#0f4c75",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["productivity", "utilities"],
+    "shortcuts": [
+        {
+            "name": "Voice Command",
+            "short_name": "Speak",
+            "description": "Start voice command",
+            "url": "/?voice"
+        },
+        {
+            "name": "Check Weather",
+            "short_name": "Weather",
+            "description": "Get weather information",
+            "url": "/?weather"
+        }
+    ]
+}
