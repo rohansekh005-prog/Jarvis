@@ -1,3 +1,4 @@
+cat > service-worker.js << 'EOF'
 const CACHE_NAME = 'jarvis-v1';
 const urlsToCache = [
     '/',
@@ -43,3 +44,4 @@ self.addEventListener('activate', event => {
         })
     );
 });
+EOF
