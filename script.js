@@ -3,17 +3,14 @@ class JarvisAssistant {
         this.recognition = null;
         this.synthesis = window.speechSynthesis;
         this.isActive = false;
-        this.lastResponse = ""; // একই কথা বারবার বলা বন্ধ করতে
+        
+        // LocalStorage থেকে নাম খুঁজে বের করা
+        this.userName = localStorage.getItem('jarvis_user_name') || "";
 
         this.init();
     }
 
     init() {
-        this.setupSpeech();
-        this.setupButtons();
-    }
-
-    setupSpeech() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert("Chrome ব্যবহার করুন");
 
@@ -22,58 +19,65 @@ class JarvisAssistant {
         this.recognition.lang = 'en-US';
 
         this.recognition.onresult = (event) => {
-            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-            
-            // যদি Jarvis নিজেই কথা বলে, তবে সেই সময় সে শুনবে না (Loop Guard)
             if (this.synthesis.speaking) return;
-
+            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
             document.getElementById('userTranscript').textContent = transcript;
-            this.handleCommand(transcript);
+            this.handleLogic(transcript);
         };
 
         this.recognition.onend = () => { if (this.isActive) this.recognition.start(); };
+        this.setupButton();
     }
 
-    handleCommand(cmd) {
-        let response = "";
+    handleLogic(cmd) {
+        let reply = "";
 
-        if (cmd.includes('time')) {
-            response = "It is " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } else if (cmd.includes('hello') || cmd.includes('hi')) {
-            response = "Hello sir, I am online.";
-        } else if (cmd.includes('stop')) {
+        // নাম মনে রাখার লজিক
+        if (cmd.includes('my name is')) {
+            const words = cmd.split(' ');
+            this.userName = words[words.length - 1]; // শেষ শব্দটি নাম হিসেবে নেবে
+            localStorage.setItem('jarvis_user_name', this.userName);
+            reply = `Understood. I will remember your name, ${this.userName} sir.`;
+        } 
+        else if (cmd.includes('what is my name')) {
+            reply = this.userName ? `Your name is ${this.userName}, sir.` : "You haven't told me your name yet, sir.";
+        }
+        else if (cmd.includes('hello') || cmd.includes('hi')) {
+            reply = this.userName ? `Hello ${this.userName} sir, how can I assist you?` : "Hello sir, how can I help you today?";
+        }
+        else if (cmd.includes('time')) {
+            reply = "The time is " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        else if (cmd.includes('offline') || cmd.includes('stop')) {
             this.isActive = false;
             this.recognition.stop();
-            response = "Systems shutting down.";
+            reply = "Shutting down systems. Goodbye sir.";
         } else {
-            // যদি সে কিছু না বোঝে, তবে সে চুপ থাকবে (বারবার প্রশ্ন করবে না)
-            return; 
+            return;
         }
 
-        // একই উত্তর পরপর দুইবার দেবে না
-        if (response !== this.lastResponse) {
-            this.speak(response);
-            this.lastResponse = response;
-        }
+        this.speak(reply);
     }
 
     speak(text) {
         this.synthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
+        msg.pitch = 0.85;
         msg.onstart = () => { document.getElementById('assistantResponse').textContent = text; };
         this.synthesis.speak(msg);
     }
 
-    setupButtons() {
+    setupButton() {
         document.getElementById('voiceBtn').onclick = () => {
             if (!this.isActive) {
                 this.isActive = true;
                 this.recognition.start();
-                this.speak("Jarvis is ready.");
+                let welcome = this.userName ? `Welcome back, ${this.userName} sir. I am online.` : "Jarvis is online. How can I assist you?";
+                this.speak(welcome);
             } else {
                 this.isActive = false;
                 this.recognition.stop();
-                this.speak("Goodbye.");
+                this.speak("Going offline.");
             }
         };
     }
