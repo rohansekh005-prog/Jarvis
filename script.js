@@ -4,54 +4,92 @@ class JarvisAssistant {
         this.synthesis = window.speechSynthesis;
         this.isListening = false;
         this.isActive = false;
-        this.wakeWord = 'hey jarvis';
+        
+        // এলিমেন্টগুলো সিলেক্ট করা
+        this.userTranscript = document.getElementById('userTranscript');
+        this.assistantResponse = document.getElementById('assistantResponse');
+        this.voiceBtn = document.getElementById('voiceBtn');
+        this.pulseRing = document.getElementById('pulseRing');
+
         this.init();
     }
 
     init() {
         this.initSpeechRecognition();
         this.bindEvents();
-        // অ্যান্ড্রয়েডে অডিও আনলক করার জন্য একবার ক্লিক জরুরি
-        console.log("Jarvis Initialized");
+        console.log("J.A.R.V.I.S. Enhanced System Online");
     }
 
     initSpeechRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            this.recognition = new SpeechRecognition();
-            this.recognition.continuous = true;
-            this.recognition.interimResults = false;
-            this.recognition.lang = 'en-US'; // বাংলা চাইলে 'bn-BD' দিন
-
-            this.recognition.onresult = (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-                document.getElementById('userTranscript').textContent = transcript;
-                this.processCommand(transcript);
-            };
-
-            this.recognition.onend = () => {
-                if (this.isActive) this.recognition.start(); // অটোমেটিক রিস্টার্ট
-            };
-
-            this.recognition.onerror = (event) => {
-                console.error("Speech Error: ", event.error);
-            };
+        
+        if (!SpeechRecognition) {
+            alert("Your browser does not support Speech Recognition. Please use Chrome on Android.");
+            return;
         }
+
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true; // একটানা শুনবে
+        this.recognition.interimResults = false;
+        this.recognition.lang = 'en-US';
+
+        this.recognition.onstart = () => {
+            this.isListening = true;
+            this.updateUI(true);
+        };
+
+        this.recognition.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+            this.userTranscript.textContent = transcript;
+            this.processCommand(transcript);
+        };
+
+        this.recognition.onend = () => {
+            this.isListening = false;
+            // যদি আমরা ম্যানুয়ালি বন্ধ না করি, তবে এটি অটোমেটিক আবার শোনা শুরু করবে
+            if (this.isActive) {
+                this.recognition.start();
+            } else {
+                this.updateUI(false);
+            }
+        };
+
+        this.recognition.onerror = (event) => {
+            console.error("Mic Error:", event.error);
+            if (event.error === 'not-allowed') {
+                alert("Please allow microphone access in your browser settings.");
+            }
+        };
     }
 
     processCommand(command) {
         let response = "";
-        
+
+        // কমান্ড লজিক
         if (command.includes('time')) {
-            response = "The time is " + new Date().toLocaleTimeString();
-        } else if (command.includes('hello') || command.includes('hi jarvis')) {
-            response = "Hello sir, how can I help you?";
-        } else if (command.includes('weather')) {
-            response = "The weather is clear today, sir.";
-        } else if (command.includes('joke')) {
-            response = "Why did the robot go to the doctor? Because it had a virus!";
-        } else {
-            response = "I heard you, but I don't have a command for that yet.";
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            response = `The time is ${time}, sir.`;
+        } 
+        else if (command.includes('hello') || command.includes('jarvis')) {
+            response = "Online and ready, sir. How can I help you today?";
+        } 
+        else if (command.includes('weather')) {
+            response = "Checking the systems... The sky looks clear from my perspective.";
+        } 
+        else if (command.includes('who are you')) {
+            response = "I am J.A.R.V.I.S., your personal artificial intelligence assistant.";
+        } 
+        else if (command.includes('open google')) {
+            response = "Opening Google for you, sir.";
+            window.open('https://www.google.com', '_blank');
+        } 
+        else if (command.includes('stop') || command.includes('deactivate')) {
+            response = "System going offline. Goodbye, sir.";
+            this.isActive = false;
+            this.recognition.stop();
+        } 
+        else {
+            response = "I have recorded the command: " + command + ". However, I don't have a specific protocol for this yet.";
         }
 
         this.speak(response);
@@ -59,34 +97,45 @@ class JarvisAssistant {
 
     speak(text) {
         if (!this.synthesis) return;
-        this.synthesis.cancel(); // আগের কথা থামিয়ে নতুন কথা শুরু করবে
+        
+        // আগের কথা থামিয়ে নতুন কথা বলা
+        this.synthesis.cancel();
+        
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
+        utterance.pitch = 0.8; // একটু গম্ভীর গলার জন্য (Jarvis style)
         utterance.rate = 1.0;
-        
-        document.getElementById('assistantResponse').textContent = text;
+
+        this.assistantResponse.textContent = text;
         this.synthesis.speak(utterance);
     }
 
+    updateUI(listening) {
+        if (listening) {
+            this.voiceBtn.style.background = "#00ff88"; // সবুজ রং যখন শুনবে
+            if (this.pulseRing) this.pulseRing.classList.add('active');
+        } else {
+            this.voiceBtn.style.background = "#0f4c75"; // সাধারণ নীল রং
+            if (this.pulseRing) this.pulseRing.classList.remove('active');
+        }
+    }
+
     bindEvents() {
-        const voiceBtn = document.getElementById('voiceBtn');
-        voiceBtn.addEventListener('click', () => {
+        this.voiceBtn.addEventListener('click', () => {
             if (!this.isActive) {
                 this.isActive = true;
                 this.recognition.start();
-                this.speak("Jarvis is now active.");
-                voiceBtn.style.background = "#00b4d8";
+                this.speak("Systems initialized. I am listening.");
             } else {
                 this.isActive = false;
                 this.recognition.stop();
-                this.speak("Jarvis deactivated.");
-                voiceBtn.style.background = "#0f4c75";
+                this.speak("Systems paused.");
             }
         });
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    new JarvisAssistant();
-});
-
+// ডোমে লোড হওয়ার পর ইনিশিয়ালাইজ করা
+window.onload = () => {
+    window.jarvis = new JarvisAssistant();
+};
