@@ -1,0 +1,701 @@
+here
+mkdir -p jarvis-mobile-assistant/icons jarvis-mobile-assistant/sounds
+cd jarvis-mobile-assistant
+
+cat > index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>JARVIS Mobile Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="install-prompt">
+        <p>Install JARVIS Assistant for better experience</p>
+        <button id="installBtn">Install</button>
+        <button id="dismissBtn">Dismiss</button>
+    </div>
+
+    <!-- Main Interface -->
+    <div class="container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time" id="currentTime">00:00</div>
+            <div class="status-icons">
+                <i class="fas fa-microphone" id="micStatusIcon"></i>
+                <i class="fas fa-battery-three-quarters"></i>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <h1><i class="fas fa-robot"></i> J.A.R.V.I.S.</h1>
+            <p class="subtitle">Just A Rather Very Intelligent System</p>
+        </header>
+
+        <!-- Main Display -->
+        <main class="main-content">
+            <!-- Visual Feedback -->
+            <div class="visual-feedback">
+                <div class="pulse-ring" id="pulseRing"></div>
+                <div class="assistant-face" id="assistantFace">
+                    <div class="eye left"></div>
+                    <div class="eye right"></div>
+                    <div class="mouth" id="mouth"></div>
+                </div>
+            </div>
+
+            <!-- Command Display -->
+            <div class="command-display">
+                <div class="listening-indicator" id="listeningIndicator">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    Listening...
+                </div>
+                <div class="transcript" id="transcript">
+                    <p id="userTranscript">Say "Hey Jarvis" to begin</p>
+                    <p id="assistantResponse" class="response">Ready to assist you</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn" id="voiceBtn">
+                    <i class="fas fa-microphone"></i>
+                    <span>Voice Command</span>
+                </button>
+                
+                <button class="control-btn" id="commandsBtn">
+                    <i class="fas fa-list"></i>
+                    <span>Commands</span>
+                </button>
+                
+                <button class="control-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="quick-btn" id="weatherBtn">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>Weather</span>
+                </button>
+                <button class="quick-btn" id="timeBtn">
+                    <i class="fas fa-clock"></i>
+                    <span>Time</span>
+                </button>
+                <button class="quick-btn" id="newsBtn">
+                    <i class="fas fa-newspaper"></i>
+                    <span>News</span>
+                </button>
+                <button class="quick-btn" id="reminderBtn">
+                    <i class="fas fa-bell"></i>
+                    <span>Reminder</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Wake Word Toggle -->
+        <div class="wake-word-section">
+            <label class="switch">
+                <input type="checkbox" id="wakeWordToggle" checked>
+                <span class="slider"></span>
+            </label>
+            <span class="wake-word-label">"Hey Jarvis" wake word</span>
+        </div>
+    </div>
+
+    <!-- Commands Modal -->
+    <div id="commandsModal" class="modal">
+        <div class="modal-content">
+            <h2>Available Commands</h2>
+            <div class="commands-list">
+                <div class="command-item">
+                    <strong>"What's the time?"</strong>
+                    <span>Get current time</span>
+                </div>
+                <div class="command-item">
+                    <strong>"What's the weather?"</strong>
+                    <span>Get weather information</span>
+                </div>
+                <div class="command-item">
+                    <strong>"Set a reminder"</strong>
+                    <span>Set a new reminder</span>
+                </div>
+                <div class="command-item">
+                    <strong>"Tell me a joke"</strong>
+                    <span>Hear a random joke</span>
+                </div>
+                <div class="command-item">
+                    <strong>"What can you do?"</strong>
+                    <span>List all commands</span>
+                </div>
+                <div class="command-item">
+                    <strong>"Goodbye"</strong>
+                    <span>Deactivate assistant</span>
+                </div>
+            </div>
+            <button class="close-btn" id="closeCommands">Close</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            <div class="settings-options">
+                <div class="setting-item">
+                    <label for="voiceSelect">Assistant Voice</label>
+                    <select id="voiceSelect">
+                        <option value="">Default</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="volumeControl">Volume</label>
+                    <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="1">
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="soundEffectsToggle" checked>
+                        Sound Effects
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="autoStartToggle">
+                        Auto-start on open
+                    </label>
+                </div>
+            </div>
+            <button class="close-btn" id="closeSettings">Close</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <p id="notificationText"></p>
+    </div>
+
+    <!-- Audio elements for sounds -->
+    <audio id="activationSound">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mpeg">
+    </audio>
+    <audio id="notificationSound">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
+EOF
+cat > style.css << 'EOF'
+:root {
+    --primary-color: #1a1a2e;
+    --secondary-color: #16213e;
+    --accent-color: #0f4c75;
+    --highlight-color: #00b4d8;
+    --text-color: #e6e6e6;
+    --success-color: #4CAF50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 15px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Status Bar */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 0.9em;
+}
+
+.status-icons i {
+    margin-left: 10px;
+    color: var(--highlight-color);
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    color: var(--highlight-color);
+    margin-bottom: 5px;
+}
+
+.header .subtitle {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+/* Visual Feedback */
+.visual-feedback {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+}
+
+.assistant-face {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: 0 0 30px rgba(0, 180, 216, 0.3);
+}
+
+.eye {
+    width: 30px;
+    height: 30px;
+    background: var(--highlight-color);
+    border-radius: 50%;
+    margin: 0 15px;
+    position: relative;
+    display: inline-block;
+    animation: blink 3s infinite;
+}
+
+@keyframes blink {
+    0%, 90%, 100% { height: 30px; }
+    95% { height: 5px; }
+}
+
+.mouth {
+    width: 60px;
+    height: 20px;
+    background: var(--highlight-color);
+    border-radius: 0 0 30px 30px;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    border: 2px solid var(--highlight-color);
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 1;
+}
+
+.pulse-ring.active {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+}
+
+/* Command Display */
+.command-display {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 20px;
+    min-height: 120px;
+}
+
+.listening-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--highlight-color);
+    margin-bottom: 15px;
+}
+
+.listening-indicator.active {
+    display: flex;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background: var(--highlight-color);
+    border-radius: 50%;
+    margin: 0 3px;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+.transcript p {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+#userTranscript {
+    color: var(--highlight-color);
+    font-weight: 500;
+}
+
+.response {
+    color: #00ff88;
+    font-style: italic;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    gap: 10px;
+}
+
+.control-btn {
+    flex: 1;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 15px;
+    padding: 15px;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+    background: var(--highlight-color);
+}
+
+.control-btn i {
+    font-size: 1.5em;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.quick-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quick-btn:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+
+/* Wake Word Section */
+.wake-word-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--highlight-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--primary-color);
+    border-radius: 20px;
+    padding: 25px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: var(--highlight-color);
+}
+
+.commands-list, .settings-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.command-item, .setting-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.command-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-item select, .setting-item input[type="range"] {
+    background: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+}
+
+.close-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.close-btn:active {
+    background: var(--highlight-color);
+}
+
+/* Notification */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-color);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    display: none;
+    z-index: 1001;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.notification.active {
+    display: block;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+/* Install Prompt */
+.install-prompt {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--accent-color);
+    color: white;
+    padding: 15px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1002;
+}
+
+.install-prompt.active {
+    display: flex;
+}
+
+.install-prompt button {
+    background: var(--highlight-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 2em;
+    }
+    
+    .visual-feedback {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .assistant-face {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .eye {
+        width: 25px;
+        height: 25px;
+    }
+    
+    .controls, .quick-actions {
+        gap: 8px;
+    }
+    
+    .control-btn, .quick-btn {
+        padding: 12px;
+        font-size: 0.8em;
+    }
+}
+EOF
